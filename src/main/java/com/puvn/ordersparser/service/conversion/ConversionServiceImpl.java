@@ -1,10 +1,10 @@
 package com.puvn.ordersparser.service.conversion;
 
-import com.puvn.ordersparser.exception.OrdersParserErrorEnum;
-import com.puvn.ordersparser.exception.OrdersParserException;
+import com.puvn.ordersparser.exception.ApplicationErrorEnum;
+import com.puvn.ordersparser.exception.ApplicationException;
 import com.puvn.ordersparser.model.ConversionTask;
 import com.puvn.ordersparser.model.OrderDto;
-import com.puvn.ordersparser.model.Task;
+import com.puvn.ordersparser.model.BusinessTask;
 import com.puvn.ordersparser.service.parsing.ParsingService;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +17,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Реализация сервиса конвертации.
+ */
 @Service
 public class ConversionServiceImpl implements ConversionService {
 
@@ -31,25 +34,35 @@ public class ConversionServiceImpl implements ConversionService {
 
 	private final ExecutorService conversionExecutorService = Executors.newFixedThreadPool(CONVERSION_THREADS_NUMBER);
 
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
-	public void convertTasks(List<Task> tasks) {
+	public void convertTasks(List<BusinessTask> businessTasks) {
 		List<Callable<Void>> callables = new ArrayList<>();
-		for (Task task : tasks) {
+		for (BusinessTask businessTask : businessTasks) {
 			callables.add(() -> {
-				parseFileWithBatching(task.getService(), task.getFilename());
+				parseFileWithBatching(businessTask.getService(), businessTask.getFilename());
 				return null;
 			});
 		}
 		try {
 			parsingExecutorService.invokeAll(callables);
 		} catch (InterruptedException e) {
-			throw new OrdersParserException(OrdersParserErrorEnum.UNEXPECTED_EXCEPTION);
+			throw new ApplicationException(ApplicationErrorEnum.UNEXPECTED_EXCEPTION);
 		} finally {
 			parsingExecutorService.shutdown();
 			conversionExecutorService.shutdown();
 		}
 	}
 
+	/**
+	 * Метод читает файл построчно, с формированием пачек по {@value BATCH_SIZE}, при этом используя функцию
+	 * преобразования из сервиса парсинга, чтобы сформировать ДТО для задачи конвертации.
+	 *
+	 * @param parsingService Сервис парсинга.
+	 * @param filename       Имя файла.
+	 */
 	private void parseFileWithBatching(ParsingService parsingService, String filename) {
 		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 			String line = reader.readLine();
@@ -63,7 +76,7 @@ public class ConversionServiceImpl implements ConversionService {
 				}
 			}
 		} catch (IOException e) {
-			throw new OrdersParserException(OrdersParserErrorEnum.CAN_NOT_READ_FILE);
+			throw new ApplicationException(ApplicationErrorEnum.CAN_NOT_READ_FILE);
 		}
 	}
 
