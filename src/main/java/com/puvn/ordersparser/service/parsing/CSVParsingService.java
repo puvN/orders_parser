@@ -15,10 +15,14 @@ public class CSVParsingService implements ParsingService {
 		return REGISTERED_EXTENSION;
 	}
 
-	//TODO добавить функцию парсинга из csv
 	@Override
 	public Function<Object, OrderDto> parse() {
-		return o -> new OrderDto((String) o);
+		return object -> getOrderDto((String) object);
+	}
+
+	private OrderDto getOrderDto(String csvString) {
+		String[] values = csvString.split(",");
+		return new OrderDto(values);
 	}
 
 }

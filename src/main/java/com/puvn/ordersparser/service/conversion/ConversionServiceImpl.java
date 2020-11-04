@@ -2,6 +2,7 @@ package com.puvn.ordersparser.service.conversion;
 
 import com.puvn.ordersparser.exception.OrdersParserErrorEnum;
 import com.puvn.ordersparser.exception.OrdersParserException;
+import com.puvn.ordersparser.model.ConversionTask;
 import com.puvn.ordersparser.model.OrderDto;
 import com.puvn.ordersparser.model.Task;
 import com.puvn.ordersparser.service.parsing.ParsingService;
@@ -43,30 +44,26 @@ public class ConversionServiceImpl implements ConversionService {
 			parsingExecutorService.invokeAll(callables);
 		} catch (InterruptedException e) {
 			throw new OrdersParserException(OrdersParserErrorEnum.UNEXPECTED_EXCEPTION);
+		} finally {
+			parsingExecutorService.shutdown();
+			conversionExecutorService.shutdown();
 		}
 	}
 
 	private void parseFileWithBatching(ParsingService parsingService, String filename) {
-		try (BufferedReader reader = new BufferedReader(new FileReader(filename))){
+		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 			String line = reader.readLine();
 			List<OrderDto> batch = new ArrayList<>(BATCH_SIZE);
 			while (line != null) {
 				batch.add(parsingService.parse().apply(line));
-				if (batch.size() == BATCH_SIZE) {
-					conversionExecutorService.submit(() -> convertToOutput(batch));
+				line = reader.readLine();
+				if (batch.size() == BATCH_SIZE || line == null) {
+					conversionExecutorService.submit(new ConversionTask(new ArrayList<>(batch)));
 					batch.clear();
 				}
-				line = reader.readLine();
 			}
 		} catch (IOException e) {
 			throw new OrdersParserException(OrdersParserErrorEnum.CAN_NOT_READ_FILE);
-		}
-	}
-
-	//TODO сделать конвертацию и вывод в stdout
-	private void convertToOutput(List<OrderDto> batch) {
-		for (OrderDto orderDto : batch) {
-			System.out.println(orderDto);
 		}
 	}
 
