@@ -10,9 +10,6 @@ import java.util.List;
  */
 public class ConversionTask implements Runnable {
 
-	/**
-	 * Список ДТО для преобразования.
-	 */
 	private final List<OrderDto> batch;
 
 	/**

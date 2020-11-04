@@ -8,9 +8,6 @@ import java.util.Arrays;
  */
 public class OrderDto {
 
-	/**
-	 * Массив значений из строки файла.
-	 */
 	private final String[] values;
 
 	/**

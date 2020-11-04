@@ -14,6 +14,10 @@ import java.util.Objects;
  */
 public class BusinessTask {
 
+	private final ParsingService service;
+
+	private final String filename;
+
 	/**
 	 * @param service  сервис парсинга
 	 * @param filename имя файла, который необходимо преобразовать
@@ -22,15 +26,6 @@ public class BusinessTask {
 		this.service = service;
 		this.filename = filename;
 	}
-
-	/**
-	 * сервис парсинга.
-	 */
-	private final ParsingService service;
-	/**
-	 * имя файла, который необходимо преобразовать.
-	 */
-	private final String filename;
 
 	/**
 	 * @return сервис парсинга

@@ -11,9 +11,6 @@ import java.util.function.Function;
 @Service
 public class CSVParsingService implements ParsingService {
 
-	/**
-	 * Расширение файла, с которым работает данная реализация сервиса.
-	 */
 	private static final String REGISTERED_EXTENSION = ".csv";
 
 	/**

@@ -19,14 +19,8 @@ import java.util.stream.Stream;
 @Service
 public class BusinessServiceImpl implements BusinessService {
 
-	/**
-	 * Список реализаций сервисов парсинга.
-	 */
 	private final List<ParsingService> parsingServices;
 
-	/**
-	 * Сервис конвертации.
-	 */
 	private final ConversionService conversionService;
 
 	/**
