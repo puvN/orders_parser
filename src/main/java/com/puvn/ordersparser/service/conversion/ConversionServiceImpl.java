@@ -2,9 +2,9 @@ package com.puvn.ordersparser.service.conversion;
 
 import com.puvn.ordersparser.exception.ApplicationErrorEnum;
 import com.puvn.ordersparser.exception.ApplicationException;
+import com.puvn.ordersparser.model.BusinessTask;
 import com.puvn.ordersparser.model.ConversionTask;
 import com.puvn.ordersparser.model.OrderDto;
-import com.puvn.ordersparser.model.BusinessTask;
 import com.puvn.ordersparser.service.parsing.ParsingService;
 import org.springframework.stereotype.Service;
 
@@ -67,8 +67,15 @@ public class ConversionServiceImpl implements ConversionService {
 		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 			String line = reader.readLine();
 			List<OrderDto> batch = new ArrayList<>(BATCH_SIZE);
+			long lineCount = 0;
 			while (line != null) {
-				batch.add(parsingService.parse().apply(line));
+				lineCount++;
+				OrderDto orderDto = parsingService.parse().apply(line);
+				if (orderDto != null) {
+					orderDto.setFilename(filename);
+					orderDto.setLineNumber(lineCount);
+					batch.add(orderDto);
+				}
 				line = reader.readLine();
 				if (batch.size() == BATCH_SIZE || line == null) {
 					conversionExecutorService.submit(new ConversionTask(new ArrayList<>(batch)));

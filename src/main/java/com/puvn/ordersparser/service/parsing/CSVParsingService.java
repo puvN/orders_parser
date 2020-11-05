@@ -13,6 +13,8 @@ public class CSVParsingService implements ParsingService {
 
 	private static final String REGISTERED_EXTENSION = ".csv";
 
+	public static final String UTF8_BOM = "\uFEFF";
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -36,8 +38,11 @@ public class CSVParsingService implements ParsingService {
 	 * @return ДТО
 	 */
 	private OrderDto getOrderDto(String csvString) {
+		if (csvString.startsWith(UTF8_BOM)) {
+			csvString = csvString.substring(1);
+		}
 		String[] values = csvString.split(",");
-		return new OrderDto(values);
+		return new OrderDto(values[0], values[1], values[2], values[3]);
 	}
 
 }
