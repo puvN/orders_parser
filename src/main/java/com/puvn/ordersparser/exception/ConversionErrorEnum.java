@@ -6,6 +6,7 @@ package com.puvn.ordersparser.exception;
 public enum ConversionErrorEnum {
 
 	WRONG_NUMBER_FORMAT("У числового поля неверный формат, подставлен %s вместо значения");
+
 	private final String exceptionMessage;
 
 	/**
