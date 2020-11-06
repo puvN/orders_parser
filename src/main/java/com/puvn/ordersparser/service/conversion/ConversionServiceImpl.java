@@ -94,7 +94,7 @@ public class ConversionServiceImpl implements ConversionService {
 				}
 			}
 		} catch (IOException e) {
-			throw new ApplicationException(ApplicationErrorEnum.CAN_NOT_READ_FILE);
+			e.printStackTrace();
 		}
 	}
 
