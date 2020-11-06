@@ -13,8 +13,9 @@ public class CSVParsingService implements ParsingService {
 
 	private static final String REGISTERED_EXTENSION = ".csv";
 
-	//в csv файлах, например excel, проставляет byte order mark,
-	//от которого лучше избавиться для корректности парсинга.
+	//приложение в csv файлах, например excel, проставляет byte order mark,
+	//от которого лучше избавиться для корректности парсинга. Иначе, например выглядящая в дебаге строка "53"
+	//выкинет NumberFormatException.
 	public static final String UTF8_BOM = "\uFEFF";
 
 	/**

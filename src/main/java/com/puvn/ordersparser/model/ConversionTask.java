@@ -18,11 +18,6 @@ public class ConversionTask implements Runnable {
 
 	private final ObjectMapper objectMapper;
 
-	private static final String SUCCESSFUL_CONVERSION = "OK"; //результат успешного конвертирования
-
-	//мок числового параметра для подстановки в выходной ответ в случае проблем с преобразованием
-	private static final byte NUMBER_MOCK = -1;
-
 	/**
 	 * @param batch Список ДТО для преобразования.
 	 */
@@ -36,6 +31,8 @@ public class ConversionTask implements Runnable {
 	 */
 	@Override
 	public void run() {
+		//можно в отдельном сервисе определять runnable и передавать в таску, чтоб сам таск не знал о
+		//реализации, но так нагляднее наверно, и не хочется плодить сервисы
 		batch.stream()
 				.map(this::convertToOut)
 				.map(this::toJson)
@@ -50,21 +47,10 @@ public class ConversionTask implements Runnable {
 	 * @return ДТО выходного формата
 	 */
 	private OutOrderDto convertToOut(OrderDto orderDto) {
-		long id;
-		long amount;
-		String result = SUCCESSFUL_CONVERSION;
-		try {
-			id = Long.parseLong(orderDto.getOrderId());
-		} catch (NumberFormatException e) {
-			result = String.format(ConversionErrorEnum.WRONG_NUMBER_FORMAT.getExceptionMessage(), NUMBER_MOCK);
-			id = NUMBER_MOCK;
-		}
-		try {
-			amount = Long.parseLong(orderDto.getAmount());
-		} catch (NumberFormatException e) {
-			result = String.format(ConversionErrorEnum.WRONG_NUMBER_FORMAT.getExceptionMessage(), NUMBER_MOCK);
-			amount = NUMBER_MOCK;
-		}
+		ConversionResult conversionResult = new ConversionResult();
+		long id = conversionResult.convert(orderDto.getOrderId()).getValue();
+		long amount = conversionResult.convert(orderDto.getAmount()).getValue();
+		String result = conversionResult.getConversionResult();
 		return new OutOrderDto(id, amount, orderDto.getComment(), orderDto.getFilename(), orderDto.getLineNumber(),
 				result);
 	}
@@ -82,6 +68,43 @@ public class ConversionTask implements Runnable {
 			e.printStackTrace();
 		}
 		return null; //допущение, что ничего не вернется, если произойдет ошибка преобразования json.
+	}
+
+	/**
+	 * Приватный класс для хранения результата конвертирования.
+	 */
+	private static class ConversionResult {
+
+		//мок числового параметра для подстановки в выходной ответ в случае проблем с преобразованием
+		private static final byte NUMBER_MOCK = -1;
+
+		private String conversionResult = "OK"; //результат успешного конвертирования
+
+		private long value;
+
+		/**
+		 * @param field поле которое нужно конвертировать
+		 * @return результат
+		 */
+		public ConversionResult convert(String field) {
+			try {
+				value = Long.parseLong(field);
+			} catch (NumberFormatException e) {
+				conversionResult =
+						String.format(ConversionErrorEnum.WRONG_NUMBER_FORMAT.getExceptionMessage(), NUMBER_MOCK);
+				value = NUMBER_MOCK;
+			}
+			return this;
+		}
+
+		public String getConversionResult() {
+			return conversionResult;
+		}
+
+		public long getValue() {
+			return value;
+		}
+
 	}
 
 }
