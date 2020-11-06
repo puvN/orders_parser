@@ -6,6 +6,8 @@ import com.puvn.ordersparser.model.BusinessTask;
 import com.puvn.ordersparser.model.ConversionTask;
 import com.puvn.ordersparser.model.OrderDto;
 import com.puvn.ordersparser.service.parsing.ParsingService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -23,16 +25,25 @@ import java.util.concurrent.Executors;
 @Service
 public class ConversionServiceImpl implements ConversionService {
 
-	//TODO вынести в application.properties
-	private static final byte PARSING_THREADS_NUMBER = 10;
+	private final Integer batchSize;
 
-	private static final byte CONVERSION_THREADS_NUMBER = 20;
+	private final ExecutorService parsingExecutorService;
 
-	private static final byte BATCH_SIZE = 100;
+	private final ExecutorService conversionExecutorService;
 
-	private final ExecutorService parsingExecutorService = Executors.newFixedThreadPool(PARSING_THREADS_NUMBER);
-
-	private final ExecutorService conversionExecutorService = Executors.newFixedThreadPool(CONVERSION_THREADS_NUMBER);
+	/**
+	 * @param parsingThreadsNumber    количество потоков для парсинга
+	 * @param conversionThreadsNumber количество потоков для конвертации
+	 * @param batchSize               размер пачки ордеров для конвертации
+	 */
+	@Autowired
+	public ConversionServiceImpl(@Value("${application.parsing.threads.number}") Integer parsingThreadsNumber,
+								 @Value("${application.conversion.threads.number}") Integer conversionThreadsNumber,
+								 @Value("${application.conversion.batch.size}") Integer batchSize) {
+		parsingExecutorService = Executors.newFixedThreadPool(parsingThreadsNumber);
+		conversionExecutorService = Executors.newFixedThreadPool(conversionThreadsNumber);
+		this.batchSize = batchSize;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -57,7 +68,7 @@ public class ConversionServiceImpl implements ConversionService {
 	}
 
 	/**
-	 * Метод читает файл построчно, с формированием пачек по {@value BATCH_SIZE}, при этом используя функцию
+	 * Метод читает файл построчно, с формированием пачек по batchSize, при этом используя функцию
 	 * преобразования из сервиса парсинга, чтобы сформировать ДТО для задачи конвертации.
 	 *
 	 * @param parsingService Сервис парсинга.
@@ -66,7 +77,7 @@ public class ConversionServiceImpl implements ConversionService {
 	private void parseFileWithBatching(ParsingService parsingService, String filename) {
 		try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
 			String line = reader.readLine();
-			List<OrderDto> batch = new ArrayList<>(BATCH_SIZE);
+			List<OrderDto> batch = new ArrayList<>(this.batchSize);
 			long lineCount = 0;
 			while (line != null) {
 				lineCount++;
@@ -77,7 +88,7 @@ public class ConversionServiceImpl implements ConversionService {
 					batch.add(orderDto);
 				}
 				line = reader.readLine();
-				if (batch.size() == BATCH_SIZE || line == null) {
+				if (batch.size() == this.batchSize || line == null) {
 					conversionExecutorService.submit(new ConversionTask(new ArrayList<>(batch)));
 					batch.clear();
 				}

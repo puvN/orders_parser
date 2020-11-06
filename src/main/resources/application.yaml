@@ -4,3 +4,12 @@ spring:
     banner-mode: off
     log-startup-info: false
 
+application:
+  parsing:
+    threads:
+      number: 10
+  conversion:
+    threads:
+      number: 20
+    batch:
+      size: 100
